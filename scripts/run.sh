@@ -1,0 +1,5 @@
+#!/bin/bash
+
+tor
+socat TCP4-LISTEN:8000,bind=127.0.0.1,fork SOCKS4A:localhost:zwt6vcp6d5tao7tbe3je6a2q4pwdfqli62ekuhjo55c7pqlet3brutqd.onion:80,socksport=9050 &
+python3 attack_3_4_5.py
