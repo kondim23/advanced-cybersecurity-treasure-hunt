@@ -68,22 +68,22 @@ Identify the location of George by investigating a series of hidden services and
 
 ### Methodology 1
 - The investigation began by visiting the .onion address provided in the challenge image.
-- Using browser developer tools, a comment was discovered containing a link to a Medium article on securing .onion sites: https://blog.0day.rocks/securing-a-web-hidden-service-89d935ba1c1d
+- Using browser developer tools, a comment was discovered containing a link to a Medium article on [securing .onion sites](https://blog.0day.rocks/securing-a-web-hidden-service-89d935ba1c1d).
 - Section 3.1 of the article referenced `server-status` and `server-info` endpoints. While `server-status` was inaccessible, `server-info` was available.
 - The `server-info` endpoint revealed a secondary onion domain: `http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/`, and indicated that directory listing was enabled.
 - Accessing this domain, it was observed that `access.php` was invoked. Investigation of accessible files led to `robots.txt`, which disallowed `.phps` files.
 - By accessing `access.phps`, the source code for `access.php` was obtained.
 - The script [sevens.py](./scripts/sevens.py) was used to identify the required value for the `desired` parameter.
-- A vulnerability in the `strcmp` function allowed authentication bypass by submitting an empty array as the password, e.g., [access.php/?user=0001337&password[]](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/access.php/?user=0001337&password[]) (the user ID padded to 7 digits).
-- This granted access to a blog at [blogposts7589109238/](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/blogposts7589109238/). Navigating to the diary entry and leveraging directory listing, a previously unseen post (`post3.html`) was found, referencing visitor #834472 on the fixers' site.
+- A vulnerability in the `strcmp` function allowed authentication bypass by submitting an empty array as the password, e.g., [/access.php/?user=0001337&password[]](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/access.php/?user=0001337&password[]) (the user ID padded to 7 digits).
+- This granted access to a blog at [/blogposts7589109238/](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/blogposts7589109238/). Navigating to the diary entry and leveraging directory listing, a previously unseen post (`post3.html`) was found, referencing visitor #834472 on the fixers' site.
 - Reloading the fixers' site revealed a visitor number of 204, which was determined to be set via a cookie: `MjA0OmZjNTZkYmM2ZDQ2NTJiMzE1Yjg2YjcxYzhkNjg4YzFjY2RlYTljNWYxZmQwNzc2M2QyNjU5ZmRlMmUyZmM0OWE`.
 - Decoding the cookie with base64 yielded `204:fc56dbc6d4652b315b86b71c8d688c1ccdea9c5f1fd07763d2659fde2e2fc49a`. Analysis of the `pico` source code revealed that authentication used `base64(username:sha256(password))`. By hypothesizing the password as `834472`, the correct value was constructed: `ODM0NDcyOjI3YzNhZjdlZjJiZWUxYWY1MjdkYmY4YzA1YjNkYjZjY2E2MzU4OTk0MWI4ZDQ5NTcyYWE2NGI1Y2Q4YzViOTc=`.
 - Setting the new cookie produced the message: `Congrats user #834472!! Check directory /sekritbackup1843 for latest news...`
-- At [sekritbackup1843/](http://2bx6yarg76ryzjdpegl5l76skdlb4vvxwjxpipq4nhz3xnjjh3jo6qyd.onion/sekritbackup1843/), two GPG files and `notes.txt` were found. The notes described the GPG key derivation process and referenced a transaction hash on the Ropsten testnet.
+- At [/sekritbackup1843/](http://2bx6yarg76ryzjdpegl5l76skdlb4vvxwjxpipq4nhz3xnjjh3jo6qyd.onion/sekritbackup1843/), two GPG files and `notes.txt` were found. The notes described the GPG key derivation process and referenced a transaction hash on the Ropsten testnet.
 - Searching the transaction hash on [Etherscan](https://ropsten.etherscan.io/tx/0xdcf1bfb1207e9b22c77de191570d46617fe4cdf4dbc195ade273485dddc16783) revealed the string `bigtent` in the input data. The script [decodeGpgFiles.py](./scripts/decodeGpgFiles.py) was used to brute-force the GPG passphrase, successfully decrypting the files.
-- The script [findTheLink.py](./scripts/findTheLink.py) was used to analyze `firefox.log`, revealing a repository. The commit hash from `signal.log` was located in this [repository](https://github.com/asn-d6/tor/commit/4ec3bbea5172e13552d47ff95e02230e6dc99692).
+- The script [findTheLink.py](./scripts/findTheLink.py) was used to analyze `firefox.log`, revealing a [repository](https://github.com/asn-d6/tor/commit/4ec3bbea5172e13552d47ff95e02230e6dc99692). The commit hash from `signal.log` was located there.
 - The commit contained RSA parameters (N, e). Using [script.py](./scripts/script.py), the encrypted values x and y were decrypted. The primes p and q were determined using WolframAlpha to solve `N = (p-1)(q-1)`.
-- Finally, at [30637353063735.txt](http://aqwlvm4ms72zriryeunpo3uk7myqjvatba4ikl3wy6etdrrblbezlfqd.onion/30637353063735.txt), it was revealed that George is located at Kilimanjaro.
+- Finally, at [/30637353063735.txt](http://aqwlvm4ms72zriryeunpo3uk7myqjvatba4ikl3wy6etdrrblbezlfqd.onion/30637353063735.txt), it was revealed that George is located at Kilimanjaro.
 
 ### Tools Used 1
 - Browser DevTools
@@ -100,7 +100,7 @@ George is located at Kilimanjaro.
 Determine who stole the "Plan X" files by analyzing a custom server and exploiting vulnerabilities.
 
 ### Methodology 2
-- From the page [blogposts7589109238/blogposts/diary2.html](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/blogposts7589109238/blogposts/diary2.html), it was determined that the Plan X server is at `zwt6vcp6d5tao7tbe3je6a2q4pwdfqli62ekuhjo55c7pqlet3brutqd.onion`, and its source code is available at [chatziko/pico](https://github.com/chatziko/pico).
+- From the page [/blogposts7589109238/blogposts/diary2.html](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/blogposts7589109238/blogposts/diary2.html), it was determined that the Plan X server is at `zwt6vcp6d5tao7tbe3je6a2q4pwdfqli62ekuhjo55c7pqlet3brutqd.onion`, and its source code is available in [github](https://github.com/chatziko/pico).
 - In [main.c](https://github.com/chatziko/pico/blob/master/main.c), a comment indicated a warning related to `printf(auth_username)` (line 135), which was confirmed by compiling and running the server locally.
 - The code exhibited an uncontrolled format string vulnerability, as `printf` was called without a format specifier, allowing for stack data leakage.
 - By submitting a username containing format specifiers (e.g., `%x %x %x %x %x %x %s`), the first entry of the `htpasswd` array was printed, revealing the admin's username and hashed password: `admin:e5614e27f3c21283ad532a1d23b9e29d`.
