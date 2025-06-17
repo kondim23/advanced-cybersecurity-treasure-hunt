@@ -53,7 +53,7 @@ This project presents a five-stage cybersecurity challenge, designed as a progre
 ## General Notes
 - The project is structured for collaborative teams.
 - All automation scripts are compatible with Ubuntu 20.04 and utilize standard, widely available software.
-- A `run.sh` script is provided to execute the automation programs with the required parameters.
+- A `run_exploit_suite.sh` script is provided to execute the automation programs with the required parameters.
 - This report documents each step taken, including scripts and code used, to ensure reproducibility and transparency.
 - The complexity of the stages increases significantly as the challenge progresses.
 - For incomplete stages, the report includes a description of progress and proposed next steps, with partial implementations where applicable.
@@ -73,21 +73,21 @@ Identify the location of George by investigating a series of hidden services and
 - The `server-info` endpoint revealed a secondary onion domain: `http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/`, and indicated that directory listing was enabled.
 - Accessing this domain, it was observed that `access.php` was invoked. Investigation of accessible files led to `robots.txt`, which disallowed `.phps` files.
 - By accessing `access.phps`, the source code for `access.php` was obtained.
-- The script [sevens.py](./scripts/sevens.py) was used to identify the required value for the `desired` parameter.
+- The script [enumerate_desired_param.py](./scripts/enumerate_desired_param.py) was used to identify the required value for the `desired` parameter.
 - A vulnerability in the `strcmp` function allowed authentication bypass by submitting an empty array as the password, e.g., [/access.php/?user=0001337&password[]](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/access.php/?user=0001337&password[]) (the user ID padded to 7 digits).
 - This granted access to a blog at [/blogposts7589109238/](http://flffeyo7q6zllfse2sgwh7i5b5apn73g6upedyihqvaarhq5wrkkn7ad.onion/blogposts7589109238/). Navigating to the diary entry and leveraging directory listing, a previously unseen post (`post3.html`) was found, referencing visitor #834472 on the fixers' site.
 - Reloading the fixers' site revealed a visitor number of 204, which was determined to be set via a cookie: `MjA0OmZjNTZkYmM2ZDQ2NTJiMzE1Yjg2YjcxYzhkNjg4YzFjY2RlYTljNWYxZmQwNzc2M2QyNjU5ZmRlMmUyZmM0OWE`.
 - Decoding the cookie with base64 yielded `204:fc56dbc6d4652b315b86b71c8d688c1ccdea9c5f1fd07763d2659fde2e2fc49a`. Analysis of the `pico` source code revealed that authentication used `base64(username:sha256(password))`. By hypothesizing the password as `834472`, the correct value was constructed: `ODM0NDcyOjI3YzNhZjdlZjJiZWUxYWY1MjdkYmY4YzA1YjNkYjZjY2E2MzU4OTk0MWI4ZDQ5NTcyYWE2NGI1Y2Q4YzViOTc=`.
 - Setting the new cookie produced the message: `Congrats user #834472!! Check directory /sekritbackup1843 for latest news...`
 - At [/sekritbackup1843/](http://2bx6yarg76ryzjdpegl5l76skdlb4vvxwjxpipq4nhz3xnjjh3jo6qyd.onion/sekritbackup1843/), two GPG files and `notes.txt` were found. The notes described the GPG key derivation process and referenced a transaction hash on the Ropsten testnet.
-- Searching the transaction hash on [Etherscan](https://ropsten.etherscan.io/tx/0xdcf1bfb1207e9b22c77de191570d46617fe4cdf4dbc195ade273485dddc16783) revealed the string `bigtent` in the input data. The script [decodeGpgFiles.py](./scripts/decodeGpgFiles.py) was used to brute-force the GPG passphrase, successfully decrypting the files.
-- The script [findTheLink.py](./scripts/findTheLink.py) was used to analyze `firefox.log`, revealing a [repository](https://github.com/asn-d6/tor/commit/4ec3bbea5172e13552d47ff95e02230e6dc99692). The commit hash from `signal.log` was located there.
-- The commit contained RSA parameters (N, e). Using [script.py](./scripts/script.py), the encrypted values x and y were decrypted. The primes p and q were determined using WolframAlpha to solve `N = (p-1)(q-1)`.
+- Searching the transaction hash on [Etherscan](https://ropsten.etherscan.io/tx/0xdcf1bfb1207e9b22c77de191570d46617fe4cdf4dbc195ade273485dddc16783) revealed the string `bigtent` in the input data. The script [gpg_bruteforce_decrypt.py](./scripts/gpg_bruteforce_decrypt.py) was used to brute-force the GPG passphrase, successfully decrypting the files.
+- The script [extract_repo_link.py](./scripts/extract_repo_link.py) was used to analyze `firefox.log`, revealing a [repository](https://github.com/asn-d6/tor/commit/4ec3bbea5172e13552d47ff95e02230e6dc99692). The commit hash from `signal.log` was located there.
+- The commit contained RSA parameters (N, e). Using [rsa_decrypt_commit.py](./scripts/rsa_decrypt_commit.py), the encrypted values x and y were decrypted. The primes p and q were determined using WolframAlpha to solve `N = (p-1)(q-1)`.
 - Finally, at [/30637353063735.txt](http://aqwlvm4ms72zriryeunpo3uk7myqjvatba4ikl3wy6etdrrblbezlfqd.onion/30637353063735.txt), it was revealed that George is located at Kilimanjaro.
 
 ### Tools Used 1
 - Browser DevTools
-- Python scripts: [sevens.py](./scripts/sevens.py), [decodeGpgFiles.py](./scripts/decodeGpgFiles.py), [findTheLink.py](./scripts/findTheLink.py), [script.py](./scripts/script.py)
+- Python scripts: [enumerate_desired_param.py](./scripts/enumerate_desired_param.py), [gpg_bruteforce_decrypt.py](./scripts/gpg_bruteforce_decrypt.py), [extract_repo_link.py](./scripts/extract_repo_link.py), [rsa_decrypt_commit.py](./scripts/rsa_decrypt_commit.py)
 - Online tools: Etherscan, WolframAlpha, md5.gromweb.com
 
 ### Results 1
@@ -185,7 +185,7 @@ Retrieve the code for "Plan Z" by solving a chess puzzle and executing a return-
 - Using a chess analysis tool, the optimal next move was determined to be `c4`.
 
 - To obtain the IP address, a shell command was required. Initial attempts using `exec` were unsuccessful. After consulting relevant literature ([return-to-libc.pdf](https://css.csail.mit.edu/6.858/2011/readings/return-to-libc.pdf)), a return-to-libc attack leveraging the `system` function was implemented.
-- The address of `system` was determined by analyzing the offsets between libc functions, using the format string vulnerability to leak addresses from the stack. The script [find_libc_function.py](./scripts/find_libc_function.py) automated this process. The script checked all values popped by printf from positions 1 to 1000, and if they matched the prefix of the system address, it printed the position and value.
+- The address of `system` was determined by analyzing the offsets between libc functions, using the format string vulnerability to leak addresses from the stack. The script [leak_libc_addresses.py](./scripts/leak_libc_addresses.py) automated this process. The script checked all values popped by printf from positions 1 to 1000, and if they matched the prefix of the system address, it printed the position and value.
 
 #### Libc System Address
 ![GDB output showing system function address in libc](./img/libc-system-address-gdb.png)
@@ -203,7 +203,7 @@ Retrieve the code for "Plan Z" by solving a chess puzzle and executing a return-
 ### Tools Used 5
 - Chess analysis tool
 - GDB
-- Python scripting: [find_libc_function.py](./scripts/find_libc_function.py)
+- Python scripting: [leak_libc_addresses.py](./scripts/leak_libc_addresses.py)
 
 ### Results 5
 Successfully solved the chess puzzle and executed a return-to-libc attack to retrieve the code for "Plan Z".
@@ -212,7 +212,7 @@ Successfully solved the chess puzzle and executed a return-to-libc attack to ret
 
 ## Automation Script
 ### Usage
-- The [run.sh](./scripts/run.sh) script initializes Tor (port 9050) and socat to forward connections to `zwt6vcp6d5tao7tbe3je6a2q4pwdfqli62ekuhjo55c7pqlet3brutqd.onion` (127.0.0.1:8000), then executes the Python script [attack_3_4_5.py](./scripts/attack_3_4_5.py).
+- The [run_exploit_suite.sh](./scripts/run_exploit_suite.sh) script initializes Tor (port 9050) and socat to forward connections to `zwt6vcp6d5tao7tbe3je6a2q4pwdfqli62ekuhjo55c7pqlet3brutqd.onion` (127.0.0.1:8000), then executes the Python script [exploit_stages_3_4_5.py](./scripts/exploit_stages_3_4_5.py).
 - If execution fails, ensure the script has execute permissions. Two known failure cases are:
     - If any byte of the canary, post_data, or serve_ultimate_address is null (ValueError: embedded null byte)
     - If these values contain `"` or `` ` ``
